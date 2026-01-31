@@ -1,0 +1,52 @@
+name: Build and Deploy to NFSN
+
+on:
+  workflow_dispatch:  # Manual trigger
+  # Uncomment the following to deploy on every push to main:
+  # push:
+  #   branches:
+  #     - main
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.21'
+
+      - name: Build for FreeBSD
+        run: |
+          GOOS=freebsd GOARCH=amd64 go build -o website26 .
+
+      - name: Set up SSH key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.NFSN_SSH_PRIVATE_KEY }}" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan -H ssh.phx.nearlyfreespeech.net >> ~/.ssh/known_hosts
+
+      - name: Upload binary via SFTP
+        run: |
+          sftp -i ~/.ssh/id_ed25519 -b - cbhl@ssh.phx.nearlyfreespeech.net <<EOF
+          cd /home/protected
+          put website26 website26.new
+          rename website26 website26.old
+          rename website26.new website26
+          chmod 755 website26
+          EOF
+
+      - name: Restart daemon via SSH
+        run: |
+          ssh -i ~/.ssh/id_ed25519 cbhl@ssh.phx.nearlyfreespeech.net \
+            "cd /home/protected && pkill -f './website26' || true"
+          # The daemon supervisor will automatically restart the process
+
+      - name: Clean up
+        if: always()
+        run: rm -f ~/.ssh/id_ed25519
