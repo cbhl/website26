@@ -51,8 +51,8 @@ func main() {
     mux.HandleFunc("/rebootz", rebootz)
     registerPprof(mux)
     var staticHandler http.Handler
-    if _, err := os.Stat("/home/public"); err == nil {
-        staticHandler = http.FileServer(http.Dir("/home/public"))
+    if _, err := os.Stat("/home/protected/static"); err == nil {
+        staticHandler = http.FileServer(http.Dir("/home/protected/static"))
     } else {
         staticHandler = http.FileServer(http.Dir("./static"))
     }

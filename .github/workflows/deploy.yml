@@ -47,7 +47,7 @@ jobs:
           NFSN_USER: ${{ vars.NFSN_USER }}
           NFSN_HOST: ${{ vars.NFSN_HOST }}
         run: |
-          rsync -avz ./static/ "${NFSN_USER}@${NFSN_HOST}:/home/public/"
+          rsync -avz ./static/ "${NFSN_USER}@${NFSN_HOST}:/home/protected/static/"
 
       - name: Deploy templates
         env:
