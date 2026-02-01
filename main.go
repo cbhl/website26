@@ -4,6 +4,7 @@ import (
     "net/http"
     "net/http/pprof"
     "os"
+    "time"
 )
 
 func helloWorld(w http.ResponseWriter, r *http.Request) {
@@ -13,7 +14,10 @@ func helloWorld(w http.ResponseWriter, r *http.Request) {
 func rebootz(w http.ResponseWriter, r *http.Request) {
     w.WriteHeader(http.StatusOK)
     w.Write([]byte("Rebooting..."))
-    os.Exit(42)
+    go func() {
+        time.Sleep(time.Second)
+        os.Exit(42)
+    }()
 }
 
 func registerPprof(mux *http.ServeMux) {
