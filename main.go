@@ -56,7 +56,7 @@ func main() {
     mux := http.NewServeMux()
     mux.HandleFunc("/rebootz", rebootz)
     registerPprof(mux)
-    staticRoot := firstExistingDir("static", "/home/public")
+    staticRoot := firstExistingDir("static", "/home/public", "/willam/cbhl26/public")
     staticHandler := http.NotFoundHandler()
     if staticRoot != "" {
         log.Printf("static root detected: %s", staticRoot)
