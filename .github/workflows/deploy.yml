@@ -42,5 +42,12 @@ jobs:
         run: |
           rsync -avz --chmod=F755 ./website26 "${NFSN_USER}@${NFSN_HOST}:${NFSN_REMOTE_DIR}/"
 
+      - name: Deploy static assets
+        env:
+          NFSN_USER: ${{ vars.NFSN_USER }}
+          NFSN_HOST: ${{ vars.NFSN_HOST }}
+        run: |
+          rsync -avz ./static/ "${NFSN_USER}@${NFSN_HOST}:/home/public/"
+
       - name: Trigger reboot endpoint
         run: curl -fsS "https://cbhl26.nfshost.com/rebootz"
