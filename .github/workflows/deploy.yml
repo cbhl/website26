@@ -49,5 +49,12 @@ jobs:
         run: |
           rsync -avz ./static/ "${NFSN_USER}@${NFSN_HOST}:/home/public/"
 
+      - name: Deploy templates
+        env:
+          NFSN_USER: ${{ vars.NFSN_USER }}
+          NFSN_HOST: ${{ vars.NFSN_HOST }}
+        run: |
+          rsync -avz ./templates/ "${NFSN_USER}@${NFSN_HOST}:/home/protected/templates/"
+
       - name: Trigger reboot endpoint
         run: curl -fsS "https://cbhl26.nfshost.com/rebootz"

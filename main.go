@@ -1,9 +1,7 @@
 package main
 
 import (
-    "embed"
     "html/template"
-    "io/fs"
     "log"
     "net/http"
     "net/http/pprof"
@@ -11,13 +9,15 @@ import (
     "time"
 )
 
-//go:embed static/*
-var staticFS embed.FS
+func loadHomeTemplate() *template.Template {
+    templatePath := "/home/protected/templates/home.html"
+    if _, statErr := os.Stat(templatePath); statErr == nil {
+        return template.Must(template.ParseFiles(templatePath))
+    }
+    return template.Must(template.ParseFiles("./templates/home.html"))
+}
 
-//go:embed templates/*
-var templateFS embed.FS
-
-var homeTemplate = template.Must(template.ParseFS(templateFS, "templates/home.html"))
+var homeTemplate = loadHomeTemplate()
 
 func home(w http.ResponseWriter, r *http.Request) {
     if r.URL.Path != "/" {
@@ -51,11 +51,12 @@ func main() {
     mux := http.NewServeMux()
     mux.HandleFunc("/rebootz", rebootz)
     registerPprof(mux)
-    embeddedStatic, err := fs.Sub(staticFS, "static")
-    if err != nil {
-        log.Fatalf("failed to load embedded static files: %v", err)
+    var staticHandler http.Handler
+    if _, err := os.Stat("/home/public"); err == nil {
+        staticHandler = http.FileServer(http.Dir("/home/public"))
+    } else {
+        staticHandler = http.FileServer(http.Dir("./static"))
     }
-    staticHandler := http.FileServer(http.FS(embeddedStatic))
     mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
         if r.URL.Path == "/" || r.URL.Path == "/index.html" {
             home(w, r)
