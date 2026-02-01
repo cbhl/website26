@@ -2,6 +2,7 @@ package main
 
 import (
     "net/http"
+    "os"
 )
 
 func helloWorld(w http.ResponseWriter, r *http.Request) {
@@ -12,5 +13,10 @@ func main() {
     mux := http.NewServeMux()
     mux.HandleFunc("/", helloWorld)
 
-    _ = http.ListenAndServe(":8080", mux)
+    port := os.Getenv("PORT")
+    if port == "" {
+        port = "8080"
+    }
+
+    _ = http.ListenAndServe(":"+port, mux)
 }
