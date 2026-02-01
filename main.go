@@ -3,6 +3,7 @@ package main
 import (
     "embed"
     "html/template"
+    "log"
     "net/http"
     "net/http/pprof"
     "os"
@@ -58,7 +59,10 @@ func main() {
     staticRoot := firstExistingDir("static", "/home/public")
     staticHandler := http.NotFoundHandler()
     if staticRoot != "" {
+        log.Printf("static root detected: %s", staticRoot)
         staticHandler = http.FileServer(http.Dir(staticRoot))
+    } else {
+        log.Printf("static root not found; serving 404 for static assets")
     }
     mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
         if r.URL.Path == "/" || r.URL.Path == "/index.html" {
