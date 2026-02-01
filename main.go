@@ -1,6 +1,7 @@
 package main
 
 import (
+    "embed"
     "html/template"
     "net/http"
     "net/http/pprof"
@@ -8,7 +9,10 @@ import (
     "time"
 )
 
-var homeTemplate = template.Must(template.ParseFiles("templates/home.html"))
+//go:embed templates/*.html
+var templateFS embed.FS
+
+var homeTemplate = template.Must(template.ParseFS(templateFS, "templates/home.html"))
 
 func home(w http.ResponseWriter, r *http.Request) {
     if r.URL.Path != "/" {
