@@ -1,0 +1,43 @@
+name: Deploy to NearlyFreeSpeech
+
+on:
+  # push:
+  #   branches:
+  #     - main
+  workflow_dispatch:
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      - name: Build FreeBSD binary
+        env:
+          GOOS: freebsd
+          GOARCH: amd64
+        run: go build -o website26 .
+
+      - name: Add SSH key
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.NFSN_SSH_PRIVATE_KEY }}
+
+      - name: Add known hosts
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ vars.NFSN_KNOWN_HOSTS }}" >> ~/.ssh/known_hosts
+
+      - name: Deploy binary
+        env:
+          NFSN_USER: ${{ vars.NFSN_USER }}
+          NFSN_HOST: ${{ vars.NFSN_HOST }}
+          NFSN_REMOTE_DIR: ${{ vars.NFSN_REMOTE_DIR }}
+        run: |
+          rsync -avz --chmod=F755 ./website26 "${NFSN_USER}@${NFSN_HOST}:${NFSN_REMOTE_DIR}/"
