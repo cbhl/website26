@@ -3,6 +3,7 @@ package main
 import (
     "embed"
     "html/template"
+    "io/fs"
     "log"
     "net/http"
     "net/http/pprof"
@@ -10,7 +11,10 @@ import (
     "time"
 )
 
-//go:embed templates/*.html
+//go:embed static/*
+var staticFS embed.FS
+
+//go:embed templates/*
 var templateFS embed.FS
 
 var homeTemplate = template.Must(template.ParseFS(templateFS, "templates/home.html"))
@@ -43,27 +47,15 @@ func registerPprof(mux *http.ServeMux) {
     mux.HandleFunc("/debug/pprof/trace", pprof.Trace)
 }
 
-func firstExistingDir(paths ...string) string {
-    for _, path := range paths {
-        if info, err := os.Stat(path); err == nil && info.IsDir() {
-            return path
-        }
-    }
-    return ""
-}
-
 func main() {
     mux := http.NewServeMux()
     mux.HandleFunc("/rebootz", rebootz)
     registerPprof(mux)
-    staticRoot := firstExistingDir("static", "/home/public", "/willam/cbhl26/public")
-    staticHandler := http.NotFoundHandler()
-    if staticRoot != "" {
-        log.Printf("static root detected: %s", staticRoot)
-        staticHandler = http.FileServer(http.Dir(staticRoot))
-    } else {
-        log.Printf("static root not found; serving 404 for static assets")
+    embeddedStatic, err := fs.Sub(staticFS, "static")
+    if err != nil {
+        log.Fatalf("failed to load embedded static files: %v", err)
     }
+    staticHandler := http.FileServer(http.FS(embeddedStatic))
     mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
         if r.URL.Path == "/" || r.URL.Path == "/index.html" {
             home(w, r)
