@@ -41,3 +41,6 @@ jobs:
           NFSN_REMOTE_DIR: ${{ vars.NFSN_REMOTE_DIR }}
         run: |
           rsync -avz --chmod=F755 ./website26 "${NFSN_USER}@${NFSN_HOST}:${NFSN_REMOTE_DIR}/"
+
+      - name: Trigger reboot endpoint
+        run: curl -fsS "https://cbhl26.nfshost.com/rebootz"
